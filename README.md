@@ -10,4 +10,5 @@ ChatGPT with gpt-3.5-turbo developed by Qt
     build_vs\Release\chatgpt.exe
 ```
 
-## ScreenCasts
+## Screencasts
+![screencast](./images/shot.png)

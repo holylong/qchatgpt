@@ -1,0 +1,179 @@
+
+
+由于std::string的实现比较复杂，涉及到内存管理、字符串构建和字符串比较等很多细节，所以这里只是简单实现一下std::string的基本功能。
+
+首先，我们需要一个类来表示std::string。这个类中包含了一个指向字符串的指针、字符串的长度和字符串的容量等信息。
+
+```c++
+class MyString {
+public:
+    MyString(); // 默认构造函数
+    MyString(const char* s); // 带参构造函数
+    MyString(const MyString& other); // 拷贝构造函数
+    ~MyString(); // 析构函数
+
+    MyString& operator=(const MyString& other); // 赋值运算符重载
+    MyString operator+(const MyString& other); // 加法运算符重载
+    bool operator==(const MyString& other); // 等于运算符重载
+
+    char& operator[](size_t pos); // 下标运算符重载
+    const char& operator[](size_t pos) const; // 下标运算符重载（针对const对象）
+
+    size_t size() const; // 返回字符串的长度
+    const char* c_str() const; // 返回字符串的指针（以'\0'结尾）
+    bool empty() const; // 判断字符串是否为空
+
+private:
+    char* m_pData; // 指向字符串的指针
+    size_t m_size; // 字符串的长度
+    size_t m_capacity; // 字符串的容量
+
+    void reserve(size_t n); // 对字符串进行扩容
+};
+```
+
+下面是各个函数的实现：
+
+```c++
+#include <cstring>
+#include <algorithm>
+
+MyString::MyString() : m_pData(nullptr), m_size(0), m_capacity(1) {
+    m_pData = new char[m_capacity];
+    m_pData[0] = '\0';
+}
+
+MyString::MyString(const char* s) {
+    if (s == nullptr) {
+        MyString();
+        return;
+    }
+
+    size_t len = strlen(s);
+    m_capacity = len + 1;
+    m_pData = new char[m_capacity];
+    memcpy(m_pData, s, len);
+    m_pData[len] = '\0';
+    m_size = len;
+}
+
+MyString::MyString(const MyString& other) {
+    m_capacity = other.m_size + 1;
+    m_pData = new char[m_capacity];
+    memcpy(m_pData, other.m_pData, m_capacity);
+    m_size = other.m_size;
+}
+
+MyString::~MyString() {
+    delete[] m_pData;
+}
+
+MyString& MyString::operator=(const MyString& other) {
+    if (this == &other) {
+        return *this;
+    }
+
+    delete[] m_pData;
+    m_capacity = other.m_size + 1;
+    m_pData = new char[m_capacity];
+    memcpy(m_pData, other.m_pData, m_capacity);
+    m_size = other.m_size;
+
+    return *this;
+}
+
+MyString MyString::operator+(const MyString& other) {
+    MyString result;
+
+    result.reserve(m_size + other.m_size);
+    memcpy(result.m_pData, m_pData, m_size);
+    memcpy(result.m_pData + m_size, other.m_pData, other.m_size);
+    result.m_size = m_size + other.m_size;
+    result.m_pData[result.m_size] = '\0';
+
+    return result;
+}
+
+bool MyString::operator==(const MyString& other) {
+    if (this == &other) {
+        return true;
+    }
+    
+    if (m_size != other.m_size) {
+        return false;
+    }
+
+    return memcmp(m_pData, other.m_pData, m_size) == 0;
+}
+
+char& MyString::operator[](size_t pos) {
+    return m_pData[pos];
+}
+
+const char& MyString::operator[](size_t pos) const {
+    return m_pData[pos];
+}
+
+size_t MyString::size() const {
+    return m_size;
+}
+
+const char* MyString::c_str() const {
+    return m_pData;
+}
+
+bool MyString::empty() const {
+    return m_size == 0;
+}
+
+void MyString::reserve(size_t n) {
+    if (n <= m_capacity) {
+        return;
+    }
+
+    char* newData = new char[n];
+    memcpy(newData, m_pData, m_size);
+    newData[m_size] = '\0';
+    delete[] m_pData;
+    m_pData = newData;
+    m_capacity = n;
+}
+```
+
+需要注意的是，在字符串拼接时，我们需要对目标字符串进行扩容。因此，在MyString中加入了一个reserve()函数，用于对字符串进行扩容。
+
+下面是测试代码：
+
+```c++
+#include <iostream>
+
+using namespace std;
+
+int main() {
+    MyString s1; // 默认构造函数
+    cout << s1.c_str() << endl; // 输出空字符串
+
+    MyString s2("Hello, world!"); // 带参构造函数
+    cout << s2.c_str() << endl;
+
+    MyString s3(s2); // 拷贝构造函数
+    cout << s3.c_str() << endl;
+
+    MyString s4 = s3; // 赋值运算符重载
+    cout << s4.c_str() << endl;
+
+    MyString s5 = s2 + s3; // 加法运算符重载
+    cout << s5.c_str() << endl;
+
+    cout << (s2 == s3) << endl; // 等于运算符重载
+    cout << (s2 == s5) << endl;
+
+    s2[0] = 'h'; // 下标运算符重载
+    cout << s2.c_str() << endl;
+
+    cout << s2.empty() << endl; // 判断字符串是否为空
+    cout << s1.empty() << endl;
+
+    return 0;
+}
+```
