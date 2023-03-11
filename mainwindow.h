@@ -6,6 +6,12 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QProgressDialog>
+
+#include <QVector>
+#include <QString>
+#include <QMap>
+//#include <tuple>
+
 #include "settingdialog.h"
 
 class QMarkdownTextEdit;
@@ -60,6 +66,9 @@ private:
     UpdateTextWorker      *_worker;
 
     SettingDialog  _dialog;
+
+    QVector<QMap<QString, QString >> _arrRequest;
+//    QVector<std::tuple<const QString&, const QString &>> _arrRequest;
 
 signals:
     void appendEditTextSignal(const QString& tx);

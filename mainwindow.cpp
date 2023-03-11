@@ -61,25 +61,32 @@ void MainWindow::StartRequest(const QString &question)
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", QString("Bearer " + ChatGptConfig::Instance()->_apiKey).toUtf8());
 
-    QJsonObject prompt;
-    prompt.insert("role", "user");
-    prompt.insert("content", question);
+    QMap<QString, QString> map;
+    map.insert("role", "user");
+    map.insert("content", question);
+    _arrRequest.append(map);
+
     QJsonArray array;
-    array.append(prompt);
+    for(auto el : _arrRequest){
+        QJsonObject prompt;
+        prompt.insert("role", el.value("role"));
+        prompt.insert("content", el.value("content"));
+        array.append(prompt);
+    }
+
     QJsonObject parameters;
     parameters.insert("model", "gpt-3.5-turbo");
     parameters.insert("messages", array);
 
-    qDebug() << "==>" << question;
-
     QJsonDocument requestBody(parameters);
     _reply = _qnam.post(request, requestBody.toJson());
+
+    qDebug() << "==>:" << requestBody.toJson();
+
     QObject::connect(_reply, &QNetworkReply::finished, [&]{
         if (_reply->error() == QNetworkReply::NoError) {
-//            QString retmsg = "";
             QByteArray responseData = _reply->readAll();
             QJsonDocument responseDoc = QJsonDocument::fromJson(responseData);
-//            qDebug() << "all:" << responseData;
             QJsonObject responseObject = responseDoc.object();
             QJsonValue choicesValue = responseObject.value("choices");
             if (choicesValue.isArray() && choicesValue.toArray().size() > 0) {
@@ -88,6 +95,12 @@ void MainWindow::StartRequest(const QString &question)
                     _items.append(new QListWidgetItem());
                     _items.at(_items.length()-1)->setIcon(QIcon(":/res/openai_logo.svg"));
                     _ctxList->addItem(_items.at(_items.length()-1));
+
+                    QMap<QString, QString> mres;
+                    mres.insert("role", "assistant");
+                    mres.insert("content", textValue.toString());
+                    _arrRequest.append(mres);
+
                     emit appendEditTextSignal(textValue.toString());
                 }
             }
